@@ -1,0 +1,21 @@
+### Lista todos TODOs
+GET http://localhost:33333/todo
+
+### Lista todos por ID
+GET http://localhost:33333/todo/01946d28-e5dd-7000-b35d-bf544ca42aed
+
+### Cria um novo TODO
+POST http://localhost:33333/todo
+content-type: application/json
+
+{
+    "task": "Lavar roupa"
+}
+
+### Cria um novo TODO
+PATCH  http://localhost:33333/todo/0194aefd-b8cd-7000-9dc9-09b92df410cb
+content-type: application/json
+
+{
+    "done": false
+}
