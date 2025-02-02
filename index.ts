@@ -32,7 +32,7 @@ app.post('/todo', (req, res) => {
     const existingTask = todoList.find(todo => todo.task === task)
 
     if (existingTask) {
-        res.status(409).send({ error: `Já existe um tarefa criada igual a '${task}'` })
+        res.status(409).send({ error: `Já existe uma tarefa criada igual a '${task}'` })
         return
     }
 
@@ -81,3 +81,4 @@ app.listen(port, () => {
     console.log(`App de exemplo esta rodando na porta ${port}`)
 })
 
+export { app }
