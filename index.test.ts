@@ -1,17 +1,16 @@
-import { describe, it, expect, beforeAll, afterAll } from "bun:test";
+import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from "bun:test";
 import { app } from "./index";
 
 let server: any;
 let baseUrl: string;
 
-beforeAll(async () => {
+beforeEach(async () => {
   server = app.listen(0);
-  await new Promise(resolve => setTimeout(resolve, 500));
   const { port } = server.address();
   baseUrl = `http://localhost:${port}`;
 });
 
-afterAll(async () => {
+afterEach(async () => {
   if (server) {
     await new Promise(resolve => server.close(resolve));
     console.log("Servidor fechado com sucesso.");

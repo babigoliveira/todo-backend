@@ -1,11 +1,13 @@
 import express from 'express'
 import { randomUUIDv7 } from "bun"
+import cors from 'cors'
 
 const app = express()
 
 app.use(express.json())
+app.use(cors())
 
-type ToDo = { id: string, task: string, done: boolean }
+export type ToDo = { id: string, task: string, done: boolean }
 
 let todoList: ToDo[] = []
 
