@@ -1,3 +1,6 @@
+### Cria token de autenticação
+POST http://localhost:33333/auth/token
+
 ### Lista todos TODOs
 GET http://localhost:33333/todo
 

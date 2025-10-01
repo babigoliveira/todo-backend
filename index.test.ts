@@ -1,13 +1,17 @@
-import { describe, it, expect,beforeEach, afterEach } from "bun:test";
+import { describe, it, expect, beforeEach, afterEach, beforeAll } from "bun:test";
 import { app } from "./index";
 
 let server: any;
 let baseUrl: string;
+let headers: Record<string, string>;
 
 beforeEach(async () => {
   server = app.listen(0);
   const { port } = server.address();
   baseUrl = `http://localhost:${port}`;
+  const response = await fetch(`${baseUrl}/auth/token`, { method: "POST" });
+  const { token } = await response.json();
+  headers = { Authorization: `Bearer ${token}` };
 });
 
 afterEach(async () => {
@@ -21,7 +25,7 @@ describe("ToDo API test", () => {
   let todoId: string;
 
   it("should return all fetch todo", async () => {
-    const response = await fetch(`${baseUrl}/todo`);
+    const response = await fetch(`${baseUrl}/todo`, { headers });
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -31,13 +35,16 @@ describe("ToDo API test", () => {
   it("should fetch a single todo by id", async () => {
     const postResponse = await fetch(`${baseUrl}/todo`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        ...headers,
+        ...{ "Content-Type": "application/json" }
+      },
       body: JSON.stringify({ task: "Test Task" })
     });
     const postData = await postResponse.json();
     todoId = postData.id;
 
-    const getResponse = await fetch(`${baseUrl}/todo/${todoId}`);
+    const getResponse = await fetch(`${baseUrl}/todo/${todoId}`, { headers });
     const todo = await getResponse.json();
 
     expect(getResponse.status).toBe(200);
@@ -47,7 +54,7 @@ describe("ToDo API test", () => {
 
   it("should return 404 when todo not found", async () => {
     const invalidTodoId = "-1";
-    const response = await fetch(`${baseUrl}/todo/${invalidTodoId}`);
+    const response = await fetch(`${baseUrl}/todo/${invalidTodoId}`, { headers });
     const error = await response.json();
 
     expect(response.status).toBe(404);
@@ -57,7 +64,10 @@ describe("ToDo API test", () => {
   it("should create a new todo", async () => {
     const response = await fetch(`${baseUrl}/todo`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        ...headers,
+        ...{ "Content-Type": "application/json" }
+      },
       body: JSON.stringify({ task: "New Task" })
     });
     const data = await response.json();
@@ -70,7 +80,10 @@ describe("ToDo API test", () => {
   it("should return 409 if task already exists", async () => {
     const response = await fetch(`${baseUrl}/todo`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        ...headers,
+        ...{ "Content-Type": "application/json" }
+      },
       body: JSON.stringify({ task: "New Task" })
     });
     const data = await response.json();
@@ -82,7 +95,10 @@ describe("ToDo API test", () => {
   it("should update todo status", async () => {
     const response = await fetch(`${baseUrl}/todo/${todoId}`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        ...headers,
+        ...{ "Content-Type": "application/json" }
+      },
       body: JSON.stringify({ done: true })
     });
     const data = await response.json();
@@ -93,18 +109,20 @@ describe("ToDo API test", () => {
 
   it("should delete a todo", async () => {
     const response = await fetch(`${baseUrl}/todo/${todoId}`, {
-      method: "DELETE"
+      method: "DELETE",
+      headers
     });
     expect(response.status).toBe(204);
 
-    const getResponse = await fetch(`${baseUrl}/todo/${todoId}`);
+    const getResponse = await fetch(`${baseUrl}/todo/${todoId}`, { headers });
     expect(getResponse.status).toBe(404);
   });
 
   it("should return 404 when trying to delete non-existent todo", async () => {
     const invalidTodoId = "-1";
     const response = await fetch(`${baseUrl}/todo/${invalidTodoId}`, {
-      method: "DELETE"
+      method: "DELETE",
+      headers
     });
     const error = await response.json();
 

@@ -1,86 +1,101 @@
-import express from 'express'
-import { randomUUIDv7 } from "bun"
-import cors from 'cors'
+import "dotenv/config";
+import express from "express";
+import { randomUUIDv7 } from "bun";
+import cors from "cors";
+import jwt from "jsonwebtoken";
+import { authenticateToken } from "./authenticateToken";
 
-const app = express()
+const app = express();
 
-app.use(express.json())
-app.use(cors())
+app.use(express.json());
+app.use(cors());
 
-export type ToDo = { id: string, task: string, done: boolean }
+const JWT_SECRET = process.env.JWT_SECRET;
 
-let todoList: ToDo[] = []
+if (!JWT_SECRET) {
+  throw new Error("JWT_SECRET não está definido no .env");
+}
 
-app.get('/todo', (req, res) => {
-    res.send(todoList)
-})
+export type ToDo = { id: string; task: string; done: boolean };
 
-app.get('/todo/:todoId', (req, res) => {
-    const todoId = req.params.todoId
+let todoList: ToDo[] = [];
 
-    const todo = todoList.find(todo => todo.id === todoId)
+app.post("/auth/token", (req, res) => {
+  const payload = { user: "admin" };
+  const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "1h" });
+  res.json({ token });
+});
 
-    if (!todo) {
-        res.status(404).send({ error: `Não existe um toDo com o 'id ${todoId}'` })
-        return
-    }
+app.get("/todo", authenticateToken, (req, res) => {
+  res.send(todoList);
+});
 
-    res.send(todo)
-})
+app.get("/todo/:todoId", authenticateToken, (req, res) => {
+  const todoId = req.params.todoId;
 
-app.post('/todo', (req, res) => {
-    const task = req.body.task
+  const todo = todoList.find(todo => todo.id === todoId);
 
-    const existingTask = todoList.find(todo => todo.task === task)
+  if (!todo) {
+    res.status(404).send({ error: `Não existe um toDo com o 'id ${todoId}'` });
+    return;
+  }
 
-    if (existingTask) {
-        res.status(409).send({ error: `Já existe uma tarefa criada igual a '${task}'` })
-        return
-    }
+  res.send(todo);
+});
 
-    todoList.push({
-        id: randomUUIDv7().toString(),
-        done: false,
-        task: req.body.task
-    })
+app.post("/todo", authenticateToken, (req, res) => {
+  const task = req.body.task;
 
-    res.status(201).send(todoList.at(-1))
-})
+  const existingTask = todoList.find(todo => todo.task === task);
 
-app.patch('/todo/:todoId',(req, res) => {
-    const todoId = req.params.todoId
-    const done = req.body.done
+  if (existingTask) {
+    res.status(409).send({ error: `Já existe uma tarefa criada igual a '${task}'` });
+    return;
+  }
 
-    const todo = todoList.find(todo => todo.id === todoId)
+  todoList.push({
+    id: randomUUIDv7().toString(),
+    done: false,
+    task: req.body.task
+  });
 
-    if (!todo) {
-        res.status(404).send({ error: `Não existe um toDo com o 'id ${todoId}'` })
-        return
-    }
+  res.status(201).send(todoList.at(-1));
+});
 
-    todo.done = done
-    res.send(todo)
-})
+app.patch("/todo/:todoId", authenticateToken, (req, res) => {
+  const todoId = req.params.todoId;
+  const done = req.body.done;
 
-app.delete('/todo/:todoId', (req, res) => {
-    const todoId = req.params.todoId
+  const todo = todoList.find(todo => todo.id === todoId);
 
-    const indexOfToDo = todoList.findIndex(todo => todo.id === todoId)
+  if (!todo) {
+    res.status(404).send({ error: `Não existe um toDo com o 'id ${todoId}'` });
+    return;
+  }
 
-    if (indexOfToDo === -1) {
-        res.status(404).send({ error: `Não existe um toDo com o 'id ${indexOfToDo}'` })
-        return
-    }
+  todo.done = done;
+  res.send(todo);
+});
 
-    todoList.splice(indexOfToDo, 1)
+app.delete("/todo/:todoId", authenticateToken, (req, res) => {
+  const todoId = req.params.todoId;
 
-    res.status(204).send()
-})
+  const indexOfToDo = todoList.findIndex(todo => todo.id === todoId);
 
-const port = 33333
+  if (indexOfToDo === -1) {
+    res.status(404).send({ error: `Não existe um toDo com o 'id ${indexOfToDo}'` });
+    return;
+  }
+
+  todoList.splice(indexOfToDo, 1);
+
+  res.status(204).send();
+});
+
+const port = 33333;
 
 app.listen(port, () => {
-    console.log(`App de exemplo esta rodando na porta ${port}`)
-})
+  console.log(`App de exemplo esta rodando na porta ${port}`);
+});
 
-export { app }
+export { app };
