@@ -16,7 +16,7 @@ if (!JWT_SECRET) {
   throw new Error("JWT_SECRET não está definido no .env");
 }
 
-export type ToDo = { id: string; task: string; done: boolean };
+export type ToDo = { id: string; task: string; done: boolean; flag: "high" | "medium" | "low" };
 
 let todoList: ToDo[] = [];
 
@@ -44,7 +44,7 @@ app.get("/todo/:todoId", authenticateToken, (req, res) => {
 });
 
 app.post("/todo", authenticateToken, (req, res) => {
-  const task = req.body.task;
+  const { task, flag } = req.body;
 
   const existingTask = todoList.find(todo => todo.task === task);
 
@@ -53,18 +53,23 @@ app.post("/todo", authenticateToken, (req, res) => {
     return;
   }
 
+  if (!flag || !["high", "medium", "low"].includes(flag)) {
+    res.status(400).send({ error: "Flag inválida" });
+    return;
+  }
+
   todoList.push({
     id: randomUUIDv7().toString(),
     done: false,
-    task: req.body.task
+    task: req.body.task,
+    flag
   });
 
   res.status(201).send(todoList.at(-1));
 });
-
 app.patch("/todo/:todoId", authenticateToken, (req, res) => {
   const todoId = req.params.todoId;
-  const done = req.body.done;
+  const { task, done, flag } = req.body;
 
   const todo = todoList.find(todo => todo.id === todoId);
 
@@ -73,7 +78,22 @@ app.patch("/todo/:todoId", authenticateToken, (req, res) => {
     return;
   }
 
-  todo.done = done;
+  if (task !== undefined) {
+    todo.task = task;
+  }
+
+  if (done !== undefined) {
+    todo.done = done;
+  }
+
+  if (flag !== undefined) {
+    if (!["high", "medium", "low"].includes(flag)) {
+      res.status(400).send({ error: "Flag inválida" });
+      return;
+    }
+    todo.flag = flag;
+  }
+
   res.send(todo);
 });
 
