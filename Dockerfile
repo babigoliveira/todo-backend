@@ -8,4 +8,4 @@ RUN bun install
 
 EXPOSE 33333
 
-CMD ["bun", "run", "index.ts"]
+CMD ["bun", "run", "server.ts"]
