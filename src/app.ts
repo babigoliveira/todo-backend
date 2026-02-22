@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 
 import authRoutes from "./router/auth.routes";
 import todoRoutes from "./router/todo.routes";
+import userRouter from "./router/user.routes";
 
 const app = express();
 
@@ -20,5 +21,6 @@ app.use(cookieParser());
 
 app.use("/auth", authRoutes);
 app.use("/todo", todoRoutes);
+app.use("/user", userRouter);
 
 export default app;
